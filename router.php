@@ -1,13 +1,13 @@
 <?php
 
-namespace Mocca;
-
 /**
- * Mocca - a PHP micro-router for RESTful web services and APIs.
+ * Mocca - a PHP micro-router for RESTful web services and APIs
  * 
- * @copyright 2016 Martin Dzíbela <martin@dzibela.cz>
- * @license   https://github.com/dzibma/mocca/blob/master/LICENSE MIT
+ * @author Martin Dzíbela <martin@dzibela.cz>
+ * @license MIT
  */
+
+namespace Mocca;
 
 /**
  * Add route
@@ -33,18 +33,26 @@ function route($methods, $mask, $action) {
 
 /**
  * Start routing
+ * 
+ * @param null|string $method;
+ * @param null|string $uri
  */
-function run() {
+function run($method = null, $uri = null) {
 
-    $uri = strstr($_SERVER['REQUEST_URI'], '?', true) ?: $_SERVER['REQUEST_URI'];
-    $httpMethod = strtoupper($_SERVER['REQUEST_METHOD']);
+    if ($uri === null) {
+        $uri = strstr($_SERVER['REQUEST_URI'], '?', true) ?: $_SERVER['REQUEST_URI'];
+    }
+
+    $httpMethod = strtoupper($method !== null ? $method : $_SERVER['REQUEST_METHOD']);
     if ($httpMethod === 'POST' && isset($_SERVER['X_HTTP_METHOD_OVERRIDE'])) {
         $httpMethod = strtoupper($_SERVER['X_HTTP_METHOD_OVERRIDE']);
     }
 
-    $i = 0;
-    while ($i < $count = count($routes = route(null, null, null))) {
-        list($methods, $mask, $action) = $routes[$i++];
+    $routes = route(null, null, null);
+    $count = count($routes);
+    $current = 0;
+    while ($current < $count) {
+        list($methods, $mask, $action) = $routes[$current++];
 
         $supports = is_array($methods)
             ? in_array($httpMethod, array_map('strtoupper', $methods))
@@ -53,12 +61,10 @@ function run() {
         if ($supports) {
             if ($mask && strpos($mask, ':') !== false) {
                 $mask = strtr($mask, [
-                    '/:any?' => '(?:/(.+))?',
-                    ':any' => '(.+)',
-                    '/:string?' => '(?:/([^/]+))?',
-                    ':string' => '([^/]+)',
-                    '/:float?' => '(?:/([.\d]+))?',
-                    ':float' => '([.\d]+)',
+                    '/:all?' => '(?:/(.+))?',
+                    ':all' => '(.+)',
+                    '/:any?' => '(?:/([^/]+))?',
+                    ':any' => '([^/]+)',
                     '/:int?' => '(?:/(\d+))?',
                     ':int' => '(\d+)'
                 ]);
@@ -66,7 +72,9 @@ function run() {
 
             if ($mask === null || preg_match("#^$mask()$#", $uri, $m)) {
                 call_user_func_array($action, isset($m) ? array_slice($m, 1) : []);
-                $i = $count;
+                $routes = route(null, null, null);
+                $count = count($routes);
+                $current = $count;
             }
         }
     }
