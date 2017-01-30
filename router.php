@@ -49,8 +49,8 @@ function run($method = null, $uri = null) {
     }
 
     $routes = route(null, null, null);
-    $count = count($routes);
     $current = 0;
+    $count = count($routes);
     while ($current < $count) {
         list($methods, $mask, $action) = $routes[$current++];
 
@@ -73,8 +73,8 @@ function run($method = null, $uri = null) {
             if ($mask === null || preg_match("#^$mask()$#", $uri, $m)) {
                 call_user_func_array($action, isset($m) ? array_slice($m, 1) : []);
                 $routes = route(null, null, null);
-                $count = count($routes);
                 $current = $count;
+                $count = count($routes);
             }
         }
     }
