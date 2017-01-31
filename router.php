@@ -70,8 +70,16 @@ function run($method = null, $uri = null) {
                 ]);
             }
 
-            if ($mask === null || preg_match("#^$mask()$#", $uri, $m)) {
-                call_user_func_array($action, isset($m) ? array_slice($m, 1) : []);
+            if ($mask === null || preg_match("#^$mask()$#", $uri, $matches)) {
+                $args = [];
+                $i = 1;
+                while (isset($matches[$i + 1])) {
+                    $value = $matches[$i++];
+                    $args[] = $value === '' ? null : $value;
+                }
+
+                call_user_func_array($action, $args);
+
                 $routes = route(null, null, null);
                 $current = $count;
                 $count = count($routes);
